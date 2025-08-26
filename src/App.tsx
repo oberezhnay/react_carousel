@@ -9,6 +9,7 @@ interface State {
   step: number;
   animationDuration: number;
   infinite: boolean;
+  carouselWidth: number;
 }
 
 class App extends React.Component<{}, State> {
@@ -30,13 +31,74 @@ class App extends React.Component<{}, State> {
     step: 3,
     animationDuration: 1000,
     infinite: false,
+    carouselWidth: 0,
+  };
+
+  handleNextClick = () => {
+    this.setState(prev => {
+      const { carouselWidth, step, itemWidth, images, infinite, frameSize } =
+        prev;
+      const maxCarouselWidth =
+        images.length * itemWidth - frameSize * itemWidth;
+      const newWidth = carouselWidth + step * itemWidth;
+
+      if (infinite) {
+        return {
+          ...prev,
+          carouselWidth: newWidth > maxCarouselWidth ? 0 : newWidth,
+        };
+      } else {
+        return {
+          ...prev,
+          carouselWidth: Math.min(newWidth, maxCarouselWidth),
+        };
+      }
+    });
+  };
+
+  handlePrevClick = () => {
+    this.setState(prev => {
+      const { carouselWidth, step, itemWidth, images, infinite, frameSize } =
+        prev;
+      const maxCarouselWidth =
+        images.length * itemWidth - frameSize * itemWidth;
+      const newWidth = carouselWidth - step * itemWidth;
+
+      if (infinite) {
+        return {
+          ...prev,
+          carouselWidth: newWidth < 0 ? maxCarouselWidth : newWidth,
+        };
+      } else {
+        return {
+          ...prev,
+          carouselWidth: Math.max(newWidth, 0),
+        };
+      }
+    });
   };
 
   render() {
-    const { images, itemWidth, frameSize, step, animationDuration, infinite } =
-      this.state;
+    const {
+      images,
+      itemWidth,
+      frameSize,
+      step,
+      animationDuration,
+      infinite,
+      carouselWidth,
+    } = this.state;
 
     document.title = 'Carousel';
+
+    const maxCarouselWidth = images.length * itemWidth - frameSize * itemWidth;
+
+    const isPrevDisabled =
+      !(images.length > frameSize) || (!infinite && carouselWidth === 0);
+    const isNextDisabled =
+      !(images.length > frameSize) ||
+      (!infinite && carouselWidth >= maxCarouselWidth);
+
     return (
       <div className="App">
         {/* eslint-disable-next-line */}
@@ -49,7 +111,9 @@ class App extends React.Component<{}, State> {
             type="number"
             placeholder="Item width (130px by default)"
             value={itemWidth}
-            onChange={event => this.setState({itemWidth: +event.target.value })}
+            onChange={event =>
+              this.setState({ itemWidth: +event.target.value })
+            }
             min="1"
           />
 
@@ -59,7 +123,9 @@ class App extends React.Component<{}, State> {
             type="number"
             placeholder="Frame Size (3 by default)"
             value={frameSize}
-            onChange={event => this.setState({ frameSize: +event.target.value })}
+            onChange={event =>
+              this.setState({ frameSize: +event.target.value })
+            }
             min="1"
           />
 
@@ -79,7 +145,9 @@ class App extends React.Component<{}, State> {
             type="number"
             placeholder="Animation Duration (1000 by default)"
             value={animationDuration}
-            onChange={event => this.setState({ animationDuration: +event.target.value })}
+            onChange={event =>
+              this.setState({ animationDuration: +event.target.value })
+            }
             min="500"
           />
 
@@ -88,7 +156,9 @@ class App extends React.Component<{}, State> {
             id="infinite"
             type="checkbox"
             checked={infinite}
-            onChange={event => this.setState({ infinite: event.target.checked })}
+            onChange={event =>
+              this.setState({ infinite: event.target.checked })
+            }
           />
         </div>
         <Carousel
@@ -98,7 +168,24 @@ class App extends React.Component<{}, State> {
           step={step}
           animationDuration={animationDuration}
           infinite={infinite}
+          carouselWidth={carouselWidth}
         />
+
+        <button
+          type="button"
+          onClick={this.handlePrevClick}
+          disabled={isPrevDisabled}
+        >
+          Prev
+        </button>
+        <button
+          type="button"
+          data-cy="next"
+          onClick={this.handleNextClick}
+          disabled={isNextDisabled}
+        >
+          Next
+        </button>
       </div>
     );
   }
